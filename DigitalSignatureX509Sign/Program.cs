@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -18,10 +19,13 @@ namespace DigitalSignatureX509Sign
     {
         // path variables
         private static string uri = "https://www.w3schools.com/xml/simple.xml";
-        private static string certName = "CN = CERT_SIGN";
+        private static string certName = "CN=CERT_SIGN";
 
         static void Main(string[] args)
         {
+            AppContext.SetSwitch("Switch.System.Security.Cryptography.Xml.UseInsecureHashAlgorithms", true);
+            AppContext.SetSwitch("Switch.System.Security.Cryptography.Pkcs.UseInsecureHashAlgorithms", true);
+
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.PreserveWhitespace = false;
 
@@ -29,7 +33,7 @@ namespace DigitalSignatureX509Sign
             using (WebClient client = new WebClient())
             {
                 byte[] xmlArray = client.DownloadData(uri);
-                xmlDoc.Load(Encoding.Default.GetString(xmlArray));
+                xmlDoc.LoadXml(Encoding.Default.GetString(xmlArray));
                 Console.WriteLine(Encoding.UTF8.GetString(xmlArray));
             }
 
@@ -37,7 +41,8 @@ namespace DigitalSignatureX509Sign
 
             if (cert == null)
             {
-                Console.WriteLine("Certificate " + certName + " not found."); 
+                Console.WriteLine("Certificate " + certName + " not found.");
+                Console.ReadLine();
             }
 
             SignXmlFile(xmlDoc, cert);
@@ -46,8 +51,32 @@ namespace DigitalSignatureX509Sign
             Console.ReadLine();
         }
 
-        private static void SignXmlFile(XmlDocument xmlDoc, X509Certificate cert)
+        private static void SignXmlFile(XmlDocument xmlDoc, X509Certificate2 cert)
         {
+            SignedXml signedXML = new SignedXml(xmlDoc);
+            // sign with the private key
+            signedXML.SigningKey = cert.PrivateKey;
+
+            // add reference to be signed
+            Reference reference = new Reference();
+            reference.Uri = "";
+
+            // add transformation to the reference
+            reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+            signedXML.AddReference(reference);
+
+            // add key-info
+            KeyInfo keyInfo = new KeyInfo();
+            keyInfo.AddClause(new KeyInfoX509Data(cert));
+            signedXML.KeyInfo = keyInfo;
+
+            signedXML.ComputeSignature();
+
+            // get digital signature in XML form
+            XmlElement xmlSignature = signedXML.GetXml();
+
+            // append signature to the XML doc
+            xmlDoc.DocumentElement.AppendChild(xmlDoc.ImportNode(xmlSignature, true));
 
 
         }
