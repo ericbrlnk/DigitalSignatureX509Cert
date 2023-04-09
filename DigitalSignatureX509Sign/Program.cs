@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -20,15 +21,18 @@ namespace DigitalSignatureX509Sign
         // path variables
         private static string uri = "https://www.w3schools.com/xml/simple.xml";
         private static string certName = "CN=CERT_SIGN";
+        private static string currentPath = Directory.GetCurrentDirectory();
 
         static void Main(string[] args)
         {
+            // those two lines are neccessary in .NET Framework 4.7.2
+            // it's because SHA256 has been used for signature computing
+            // this code restores SHA1
             AppContext.SetSwitch("Switch.System.Security.Cryptography.Xml.UseInsecureHashAlgorithms", true);
             AppContext.SetSwitch("Switch.System.Security.Cryptography.Pkcs.UseInsecureHashAlgorithms", true);
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.PreserveWhitespace = false;
-
 
             using (WebClient client = new WebClient())
             {
@@ -46,7 +50,7 @@ namespace DigitalSignatureX509Sign
             }
 
             SignXmlFile(xmlDoc, cert);
-            
+            File.WriteAllText(currentPath + "\\SignedDocument.xml", xmlDoc.OuterXml);
 
             Console.ReadLine();
         }
@@ -77,8 +81,6 @@ namespace DigitalSignatureX509Sign
 
             // append signature to the XML doc
             xmlDoc.DocumentElement.AppendChild(xmlDoc.ImportNode(xmlSignature, true));
-
-
         }
 
         private static X509Certificate2 GetCertificateFromTheStore(string name)
