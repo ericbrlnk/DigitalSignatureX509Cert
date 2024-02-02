@@ -11,8 +11,8 @@ using System.Xml;
 
 // X509 Certificate is created using makecert.exe
 // The certificate is placed in user store
-// In order to generate an exchange key, following command should be used:
-// makecert -r -pe -n "CN=CERT_SIGN" -b 01/01/2022 -e 01/01/2024 -sky exchange -ss my
+// In order to generate an exchange key, following command should be used (in VS-terminal):
+// makecert -r -pe -a sha256 -n "CN=CERT_SIGN" -b 01/01/2022 -e 01/01/2024 -sky exchange -ss my
 
 namespace DigitalSignatureX509Sign
 {
@@ -22,14 +22,15 @@ namespace DigitalSignatureX509Sign
         private static string uri = "https://www.w3schools.com/xml/simple.xml";
         private static string certName = "CN=CERT_SIGN";
         private static string currentPath = Directory.GetCurrentDirectory();
+        private static string fileName = "SignedDocument.xml";
 
         static void Main(string[] args)
         {
             // those two lines are neccessary in .NET Framework 4.7.2
             // it's because SHA256 has been used for signature computing
             // this code restores SHA1
-            AppContext.SetSwitch("Switch.System.Security.Cryptography.Xml.UseInsecureHashAlgorithms", true);
-            AppContext.SetSwitch("Switch.System.Security.Cryptography.Pkcs.UseInsecureHashAlgorithms", true);
+            // AppContext.SetSwitch("Switch.System.Security.Cryptography.Xml.UseInsecureHashAlgorithms", true);
+            // AppContext.SetSwitch("Switch.System.Security.Cryptography.Pkcs.UseInsecureHashAlgorithms", true);
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.PreserveWhitespace = false;
@@ -50,8 +51,8 @@ namespace DigitalSignatureX509Sign
             }
 
             SignXmlFile(xmlDoc, cert);
-            File.WriteAllText(currentPath + "\\SignedDocument.xml", xmlDoc.OuterXml);
-
+            File.WriteAllText(Path.Combine(currentPath, fileName), xmlDoc.OuterXml);
+            Console.WriteLine("File signed");
             Console.ReadLine();
         }
 
@@ -59,7 +60,7 @@ namespace DigitalSignatureX509Sign
         {
             SignedXml signedXML = new SignedXml(xmlDoc);
             // sign with the private key
-            signedXML.SigningKey = cert.PrivateKey;
+            signedXML.SigningKey = cert.GetRSAPrivateKey();
 
             // add reference to be signed
             Reference reference = new Reference();
