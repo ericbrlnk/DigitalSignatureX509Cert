@@ -57,5 +57,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DigitalSignatureX509Sign\DigitalSignatureX509Sign.csproj">
+      <Project>{be911a8d-7e6b-457d-be08-6ea41719900a}</Project>
+      <Name>DigitalSignatureX509Sign</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

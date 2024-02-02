@@ -16,7 +16,7 @@ using System.Xml;
 
 namespace DigitalSignatureX509Sign
 {
-    class Program
+    public class Program
     {
         // path variables
         private static string uri = "https://www.w3schools.com/xml/simple.xml";
@@ -84,7 +84,7 @@ namespace DigitalSignatureX509Sign
             xmlDoc.DocumentElement.AppendChild(xmlDoc.ImportNode(xmlSignature, true));
         }
 
-        private static X509Certificate2 GetCertificateFromTheStore(string name)
+        public static X509Certificate2 GetCertificateFromTheStore(string name)
         {
             X509Store store = new X509Store(StoreLocation.CurrentUser);
 
