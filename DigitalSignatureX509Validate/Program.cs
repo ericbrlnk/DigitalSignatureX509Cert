@@ -32,6 +32,8 @@ namespace DigitalSignatureX509Validate
                 XmlNodeList certNodes = xmlDoc.GetElementsByTagName("X509Certificate");
 
                 X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(certNodes[0].InnerText));
+                Console.WriteLine("Extracted certificate:");
+                Console.WriteLine(certNodes[0].InnerText);
 
                 foreach (XmlElement element in signatureNodes)
                 {
