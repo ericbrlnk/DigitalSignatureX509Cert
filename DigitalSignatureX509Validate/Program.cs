@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
@@ -26,21 +27,14 @@ namespace DigitalSignatureX509Validate
                 xmlDoc.LoadXml(xmlString);
                 Console.WriteLine(xmlString);
 
-                SignedXml signedXml = new SignedXml(xmlDoc);
-
-                XmlNodeList signatureNodes = xmlDoc.GetElementsByTagName("Signature");
-                XmlNodeList certNodes = xmlDoc.GetElementsByTagName("X509Certificate");
-
-                X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(certNodes[0].InnerText));
-                Console.WriteLine("Extracted certificate:");
-                Console.WriteLine(certNodes[0].InnerText);
-
-                foreach (XmlElement element in signatureNodes)
+                bool result = ValidateXML(xmlDoc);
+                if (result)
                 {
-                    // signature nodes
-                    signedXml.LoadXml(element);
-                    bool result = signedXml.CheckSignature(cert, true);
                     Console.WriteLine("Valid signature: " + result.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Invalid signature");
                 }
             }
             catch (FileNotFoundException ex)
@@ -52,5 +46,44 @@ namespace DigitalSignatureX509Validate
                 Console.ReadLine();
             }
         }
+
+        public static bool ValidateXML(XmlDocument xmlDoc)
+        {
+            bool result = false;
+
+            if (xmlDoc == null)
+            {
+                throw new ArgumentException("Argument exception: ", nameof(xmlDoc));
+            }
+
+            SignedXml signedXml = new SignedXml(xmlDoc);
+
+            XmlNodeList signatureNodes = xmlDoc.GetElementsByTagName("Signature");
+            XmlNodeList certNodes = xmlDoc.GetElementsByTagName("X509Certificate");
+
+            if (signatureNodes.Count == 0)
+            {
+                throw new CryptographicException("No signature found.");
+            }
+
+            if (certNodes.Count == 0)
+            {
+                throw new CryptographicException("No certificate found.");
+            }
+
+            X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(certNodes[0].InnerText));
+            Console.WriteLine("Extracted certificate:");
+            Console.WriteLine(certNodes[0].InnerText);
+
+            foreach (XmlElement element in signatureNodes)
+            {
+                // signature nodes
+                signedXml.LoadXml(element);
+                result = signedXml.CheckSignature(cert, true);
+            }
+
+            return result;
+        }
+
     }
 }
